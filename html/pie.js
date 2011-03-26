@@ -13,7 +13,15 @@ window.onload = function() {
     };
   };
   
-  plotConstituency("St Albans");
+  var key = document.getElementById('key');
+  parties.forEach(function(party) {
+    var elem = document.createElement('span');
+    elem.style.backgroundColor = colors[party];
+    elem.innerHTML = humanPartyNames[party];
+    key.appendChild(elem);
+  }); 
+  
+  plotConstituency("Keighley");
 }
 
 var colors = {
@@ -22,11 +30,23 @@ var colors = {
   con: '#00f',
   oth: '#ccc'
 }
+var gradients = {
+  lab: "#f00-#f66",
+  lib: "#ff0-#ff6",
+  con: "#00f-#66f",
+  oth: "#ccc-#fff"
+}
 var fadedColors = {
   lab: '#700',
   lib: '#770',
   con: '#007',
   oth: '#444'
+}
+var fadedGradients = {
+  lab: '#700-#d00',
+  lib: '#770-#dd0',
+  con: '#007-#00d',
+  oth: '#444-#777'
 }
 
 var parties = ['lab','lib','con','oth'];
@@ -41,6 +61,9 @@ var secondChoiceParties = {
   'lib': ['lab', 'oth','con'],
   'con': ['lib','oth','lab'],
   'oth': ['con','lib','lab']
+}
+function fp(proportion) {
+  return Math.round(proportion*100) + '%';
 }
 
 function plotConstituency(constituencyName, predictedScenarioName, baseScenarioName) {
@@ -62,10 +85,13 @@ function plotConstituency(constituencyName, predictedScenarioName, baseScenarioN
   
   var party, result = {};
   for (party in firstChoices) result[party] = firstChoices[party];
-  var paths
+  var paths;
+  var round = 0;
+  var info = document.getElementById('info');
+  info.innerHTML = 'Press space to start';
 
   function plotNext() {
-    console.log("plotting", result);
+//    console.log("plotting", result);
 
     // plot the situation:
     paths = pathsFor(result, secondChoices);
@@ -75,8 +101,15 @@ function plotConstituency(constituencyName, predictedScenarioName, baseScenarioN
     })
     
     // if someone has over 50%, they win, stop:
-    var done = false;
-    for (party in result) if (result[party] > 0.5) return;
+    var done = false, winner = null, winning = null;
+    for (party in result) if (result[party] > 0.5) {winner = party; winning = result[party]};
+    
+    var text = "<b>Round "+(++round)+'</b><br>';
+    if (winner) {
+      text += humanPartyNames[party] + ' have won, with '+fp(winning)+' of the vote!';
+      info.innerHTML = text;
+      return;
+    }
 
     // otherwise, we eliminate the party with the least votes:
     var leastParty, leastProportion = 1;
@@ -87,6 +120,10 @@ function plotConstituency(constituencyName, predictedScenarioName, baseScenarioN
       }
     }
     delete result[leastParty];
+
+    text += 'No party has a majority!<br> For the next round we eliminate '+humanPartyNames[leastParty]+' since they have the least votes ('+fp(leastProportion)+'). <br>\
+    The votes of '+humanPartyNames[leastParty]+' voters will be transferred to their second choices -- press space to see this happen';
+    info.innerHTML = text;
 
     // and we transfer their share of the first choice vote, to second choices
     // (where those second choices haven't already been eliminated):
@@ -104,7 +141,9 @@ function plotConstituency(constituencyName, predictedScenarioName, baseScenarioN
   }
 
   window.onkeydown = function(event) {
-    if (event.keyCode == 32) plotNext();
+    if (event.keyCode == 32) {
+      plotNext();
+    }
   }
 }
 
@@ -132,18 +171,18 @@ function pathsFor(proportions, secondProportions) {
       var secondProportion = secondProportions[party][secondParty], secondAngle = secondProportion*2*Math.PI;
       paths.push({
         segment: [250, 250, 250, secondCumAng, secondCumAng + secondAngle],
-        fill: fadedColors[secondParty],
+        fill: '0-'+fadedGradients[secondParty],
         title: humanPartyNames[party]+' voters\' second choice for '+humanPartyNames[secondParty]
       })
       secondCumAng += secondAngle + secondChoiceGap;
-      console.log('plotting second choice '+party+' '+secondParty+' '+secondProportion, secondChoices);
+      //console.log('plotting second choice '+party+' '+secondParty+' '+secondProportion, secondChoices);
     })
     
     paths.push({
       text: "foo",
       segment: [250, 250, 125, cumulativeAngle, cumulativeAngle + angle],
-      fill: colors[party],
-      title: humanPartyNames[party]+' have ' + proportion*100 + '% of the vote',
+      fill: 0 + '-' + gradients[party],
+      title: humanPartyNames[party]+' have ' + fp(proportion) + ' of the vote',
       proportion: proportion
     });
 
