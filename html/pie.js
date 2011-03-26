@@ -13,15 +13,20 @@ window.onload = function() {
     };
   };
   
-  var key = document.getElementById('key');
-  parties.forEach(function(party) {
-    var elem = document.createElement('span');
-    elem.style.backgroundColor = colors[party];
-    elem.innerHTML = humanPartyNames[party];
-    key.appendChild(elem);
-  }); 
-  
-  plotConstituency("Keighley");
+  var select = document.getElementById('constituency_select');
+  for (name in constituencies) {
+    var option = document.createElement('option')
+    option.name = name; option.innerHTML = name;
+    select.appendChild(option);
+  }
+  select.onchange = function() {
+    if (select.value) plotConstituency(select.value);
+  }
+
+  document.getElementById('tryAgain').onclick = function(event) {
+    event.preventDefault();
+    window.location.reload();
+  }
 }
 
 var colors = {
@@ -71,7 +76,15 @@ function plotConstituency(constituencyName, predictedScenarioName, baseScenarioN
   var baseScenario      = electionScenarios[baseScenarioName || "2010 General Election under AV"];
   var predictedScenario = electionScenarios[predictedScenarioName || "Populous/Times 23 June"];
 
-  document.getElementById('title').innerHTML = 'How would Alternative vote work in '+constituencyName+'?'
+  var key = document.getElementById('key');
+  parties.forEach(function(party) {
+    var elem = document.createElement('span');
+    elem.style.backgroundColor = colors[party];
+    elem.innerHTML = humanPartyNames[party];
+    key.appendChild(elem);
+  }); 
+
+  document.getElementById('title').innerHTML = 'How would Alternative Vote work in '+constituencyName+'?'
 
   var firstChoices = predictConstituencyFPPResult(previousResult, baseScenario, predictedScenario);
    secondChoices = {};
@@ -106,8 +119,9 @@ function plotConstituency(constituencyName, predictedScenarioName, baseScenarioN
     
     var text = "<b>Round "+(++round)+'</b><br>';
     if (winner) {
-      text += humanPartyNames[party] + ' have won, with '+fp(winning)+' of the vote!';
+      text += humanPartyNames[winner] + ' have won, with '+fp(winning)+' of the vote!';
       info.innerHTML = text;
+      document.getElementById('tryAgain').style.display = 'block';
       return;
     }
 
@@ -145,6 +159,8 @@ function plotConstituency(constituencyName, predictedScenarioName, baseScenarioN
       plotNext();
     }
   }
+  
+  plotNext();
 }
 
 function pathsFor(proportions, secondProportions) {
