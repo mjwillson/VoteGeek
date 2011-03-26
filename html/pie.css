@@ -1,0 +1,14 @@
+body {
+  background: black;
+  color: white;
+  font-family: Helvetica Neue, Helvetica, Arial;
+  padding: 20px;
+}
+#container {
+  width: 500px; height: 500px;
+  margin: 0 auto;
+}
+h1 {
+  text-align: center;
+  font-size: 120%;
+}
